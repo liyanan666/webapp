@@ -4,12 +4,24 @@
 angular.module('app',['ui.router']);
 //控制器
 
+
+//主页控制器
 angular.module('app').controller('mainCtrl', ['$http', '$scope', function($http, $scope){
   $http.get('data/positionList.json').success(function(resp){
-  	console.log(resp)
+  //	console.log(resp)
     $scope.list = resp;
   });
 }]);
+//position控制器
+
+angular.module('app').controller('positionCtrl',['$log', '$q', '$http', '$state', '$scope', 'cache',function($log, $q, $http, $state, $scope, cache){
+	$scope.isLogin = !!cache.get('name');
+	$scope.message = $scope.isLogin?'投个简历':'去登陆';
+	function getPosition(){
+		var def = $q.defer();
+		
+	}
+}])
 
 //指令
 angular.module('app').directive('appHead', [function(){
@@ -53,6 +65,55 @@ angular.module('app').directive('appFoot', [function(){
     
     templateUrl: 'view/template/foot.html'
   };
+}]);
+
+//position页指令
+
+angular.module('app').directive('appHeadBar',[function(){
+	return {
+		restrict : 'A',
+		replace :true,
+		templateUrl: 'view/template/headBar.html',
+		scope:{
+			text:'='
+		},
+		link:function($scope){
+			$scope.back = function(){
+				window.history.back();
+			};
+		}
+	};
+}]);
+
+angular.module('app').directive('appPositionInfo',['$http',function($http){
+	return {
+		restrict : 'A',
+		replace :true,
+		templateUrl: 'view/template/positionInfo.html',
+		scope:{
+			isLogin:'=',
+			pos:'=',
+			isActive:'='
+		},
+		link:function($scope){
+			$scope.$watch('pos',function(newVal){
+					if(newVal){
+						$scope.pos.select = $scope.pos.select || false;
+						 $scope.imagePath = $scope.pos.select?'image/star-active.png':'image/star.png';
+					}
+			});
+			$scope.favorite = function(){
+				$http.post('data/favorite.json',{
+					id:$scope.pos.id,
+					select: !$scope.pos.select
+				}).success(function(resp){
+					$scope.pos.select = !$scope.pos.select;
+          $scope.imagePath = $scope.pos.select?'image/star-active.png':'image/star.png';
+				});
+				
+			};
+		}
+	};
 }]);
 //过滤器
 
