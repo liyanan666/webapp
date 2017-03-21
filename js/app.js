@@ -17,6 +17,8 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
     controller: 'positionCtrl'
   }).state('company',{
   	url: '/company/:id',
+  	templateUrl : 'view/company.html',
+  	controller:'companyCtrl'
   });
   $urlRouterProvider.otherwise('main');
 }])
@@ -29,9 +31,11 @@ angular.module('app').controller('mainCtrl', ['$http', '$scope', function($http,
   });
 }]);
 //position控制器
-angular.module('app').controller('positionCtrl',['$http','$state','$scope',function($http,$state,$scope){
+angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',function($http,$q,$state,$scope){
 	$scope.message = $scope.isLogin?'请登录':'投个简历吧'
-	 $http.get('data/position.json', {
+	 function getPosition(){
+	 	var def = $q.defer();
+	 	$http.get('data/position.json', {
       params: {
         id: $state.params.id
       }
@@ -40,13 +44,23 @@ angular.module('app').controller('positionCtrl',['$http','$state','$scope',funct
       if(resp.posted) {
         $scope.message = '已投递';
       }
-     // def.resolve(resp);
+      def.resolve(resp);
     }).error(function(err) {
-     // def.reject(err);
+     	def.reject(err);
     });
-    $http.get('data/company.json?id='+$state.params.id).success(function(resp){
+    return def.promise;
+	 };
+	 function getCompany(){
+	 	$http.get('data/company.json?id='+$state.params.id).success(function(resp){
       $scope.company = resp;
     });
+	 };
+	 getPosition().then(function(){
+	 		getCompany();
+	 });
+  $scope.go = function(){//未完待续
+  	
+  }
 }])
 
 angular.module('app').controller('companyCtrl', ['$http', '$state', '$scope', function($http, $state, $scope){
@@ -159,7 +173,23 @@ angular.module('app').directive('appCompany',[function(){
 		templateUrl : 'view/template/appcompany.html',
 		
 	}
-}])
+}]);
+
+angular.module('app').directive('appPositionClass',[function(){
+	return {
+		restrict : 'A',
+		replace : true,
+		scope:{
+			com:'='
+		},
+		templateUrl : 'view/template/positionClass.html',
+		link : function($scope){
+			$scope.showPositionList = function(index){
+				
+			}
+		}
+	}
+}]);
 //过滤器
 
 angular.module('app').filter('filterByObj',[function(){
