@@ -70,6 +70,14 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
   	url:'/register',
   	templateUrl:'view/register.html',
  		controller:'registerCtrl'
+  }).state('post',{
+  	url:'/post',
+  	templateUrl:'view/post.html',
+  	controller:'postCtrl'
+  }).state('favorite',{
+  	url:'/favorite',
+  	templateUrl:'view/favorite.html',
+  	controller:'favoriteCtrl'
   });
   $urlRouterProvider.otherwise('main');
 }]);
@@ -139,7 +147,18 @@ angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',
 	 		getCompany();
 	 });
   $scope.go = function(){//未完待续
-  	
+  	 if($scope.message !== '已投递') {
+      if($scope.isLogin) {
+        $http.post('data/handle.json', {
+          id: $scope.position.id
+        }).success(function(resp) {
+          $log.info(resp);
+          $scope.message = '已投递';
+        });
+      } else {
+        $state.go('login');
+      }
+    }
   }
 }]);
 
@@ -230,9 +249,69 @@ angular.module('app').controller('loginCtrl',['$state','cache','$http','$scope',
   }
 }]);
 
-angular.module('app').controller('registerCtrl',['$state','$http','$scope',function(){
-	
+angular.module('app').controller('registerCtrl',['$state','$interval','$http','$scope',function($state,$interval,$http,$scope){
+	$scope.submit = function(){
+		$http.post('data/regist.json',$scope.user).success(function(resp){
+			$state.go('login');
+		});
+	}
+	var count = 60;
+	$scope.send = function(){
+		$http.get('data/code.json').success(function(resp){
+			if(1==resp.state){
+				count = 60;
+				$scope.time = '60s';
+				var interval = $interval(function(){
+					if(count<=0){
+						$interval.cancel(interval);
+						$scope.time = '';
+					}else{
+						count--;
+						$scope.time = ''+count+'s';
+					}
+				},1000);
+			}
+		})
+	}
 }]);
+
+angular.module('app').controller('postCtrl',['$scope','$http',function($scope,$http){
+	$scope.tabList = [{
+    id: 'all',
+    name: '全部'
+  }, {
+    id: 'pass',
+    name: '面试邀请'
+  }, {
+    id: 'fail',
+    name: '不合适'
+  }];
+  $http.get('data/myPost.json').success(function(res){
+    $scope.positionList = res;
+  });
+  $scope.filterObj = {};
+  $scope.tClick = function(id, name) {
+    switch (id) {
+      case 'all':
+        delete $scope.filterObj.state;
+        break;
+      case 'pass':
+        $scope.filterObj.state = '1';
+        break;
+      case 'fail':
+        $scope.filterObj.state = '-1';         
+        break;
+      default:
+
+    }
+  }
+}]);
+
+angular.module('app').controller('favoriteCtrl',['$scope','$http',function($scope,$http){
+	$http.get('data/myFavorite.json').success(function(resp) {
+    $scope.list = resp;
+  });
+}])
 //指令
 angular.module('app').directive('appHead', [function(){
   return {
