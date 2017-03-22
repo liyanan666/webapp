@@ -4,6 +4,19 @@
 angular.module('app',['ui.router']);
 //控制器
 
+//定义全局变量
+angular.module('app').value('dict', {}).run(['dict', '$http', function(dict, $http){
+  $http.get('data/city.json').success(function(resp){
+    dict.city = resp;
+   // console.log( dict.city)
+  });
+  $http.get('data/salary.json').success(function(resp){
+    dict.salary = resp;
+  });
+  $http.get('data/scale.json').success(function(resp){
+    dict.scale = resp;
+  });
+}]);
 
 //路由
 angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
@@ -19,6 +32,10 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
   	url: '/company/:id',
   	templateUrl : 'view/company.html',
   	controller:'companyCtrl'
+  }).state('search',{
+  	url: '/search',
+  	templateUrl : 'view/search.html',
+  	controller : 'searchCtrl'
   });
   $urlRouterProvider.otherwise('main');
 }])
@@ -61,13 +78,69 @@ angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',
   $scope.go = function(){//未完待续
   	
   }
-}])
+}]);
 
 angular.module('app').controller('companyCtrl', ['$http', '$state', '$scope', function($http, $state, $scope){
   $http.get('data/company.json?id='+$state.params.id).success(function(resp){
   	console.log(resp)
     $scope.company = resp;
   });
+}]);
+
+angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',function(dict,$http, $state, $scope){
+	$scope.name = '';
+	$scope.search = function() {
+    $http.get('data/positionList.json?name='+$scope.name).success(function(resp) {
+      $scope.positionlist = resp;
+    });
+  };
+  $scope.search();
+  $scope.sheet = {};
+  $scope.tabList = [{
+    id: 'city',
+    name: '城市'
+  }, {
+    id: 'salary',
+    name: '薪水'
+  }, {
+    id: 'scale',
+    name: '公司规模'
+  }];
+  $scope.filterObj = {};
+  var tabId = '';
+  $scope.tClick = function(id,name) {
+    tabId = id;
+    $scope.sheet.list = dict[id];
+    $scope.sheet.visible = true;
+  };
+  $scope.sClick = function(id,name) {
+    if(id) {
+      angular.forEach($scope.tabList, function(item){
+        if(item.id===tabId) {
+          item.name = name;
+        }
+      });
+      $scope.filterObj[tabId + 'Id'] = id;
+    } else {
+      delete $scope.filterObj[tabId + 'Id'];
+      angular.forEach($scope.tabList, function(item){
+        if(item.id===tabId) {
+          switch (item.id) {
+            case 'city':
+              item.name = '城市';
+              break;
+            case 'salary':
+              item.name = '薪水';
+              break;
+            case 'scale':
+              item.name = '公司规模';
+              break;
+            default:
+          }
+        }
+      });
+    }
+  }
 }]);
 
 //指令
@@ -185,11 +258,49 @@ angular.module('app').directive('appPositionClass',[function(){
 		templateUrl : 'view/template/positionClass.html',
 		link : function($scope){
 			$scope.showPositionList = function(index){
-				
+				$scope.positionList = $scope.com.positionClass[index].positionList;
+				$scope.isActive = index;
 			}
+			$scope.$watch('com',function(newVal){
+				if(newVal){ $scope.showPositionList(0)};
+			})
 		}
 	}
 }]);
+
+angular.module('app').directive('appTab',[function(){
+	return {
+		restrict : 'A',
+		replace : true,
+		scope:{
+			list:'=',
+			tabClick: '&'
+		},
+		templateUrl : 'view/template/apptab.html',
+		link : function($scope){
+			$scope.click = function(tab){
+				$scope.selectId = tab.id;
+        $scope.tabClick(tab);
+			};
+		}
+	}
+}]);
+
+angular.module('app').directive('appSheet', [function(){
+  return {
+    restrict: 'A',
+    replace: true,
+    scope: {
+      list: '=',
+      visible: '=',
+      select: '&'
+    },
+    templateUrl: 'view/template/appsheet.html'
+  };
+}]);
+
+//搜索页面
+
 //过滤器
 
 angular.module('app').filter('filterByObj',[function(){
@@ -209,5 +320,5 @@ angular.module('app').filter('filterByObj',[function(){
 		});
 		return result;
 	}
-}])
+}]);
 
