@@ -1,7 +1,7 @@
 "use strict";
 
 
-angular.module('app',['ui.router']);
+angular.module('app', ['ui.router','validation']);
 //控制器
 
 //定义全局变量
@@ -36,9 +36,46 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
   	url: '/search',
   	templateUrl : 'view/search.html',
   	controller : 'searchCtrl'
+  }).state('me',{
+  	url:'/me',
+  	templateUrl:'view/me.html',
+  	controller:'meCtrl'
+  }).state('login',{
+  	url:'/login',
+  	templateUrl:'view/login.html',
+  	controller:'loginCtrl'
   });
   $urlRouterProvider.otherwise('main');
-}])
+}]);
+
+//表单提交
+angular.module('app').config(['$validationProvider', function($validationProvider) {
+  var expression = {
+    phone: /^1[\d]{10}$/,
+    password: function(value) {
+      var str = value + ''
+      return str.length > 5;
+    },
+    required: function(value) {
+      return !!value;
+    }
+  };
+  var defaultMsg = {
+    phone: {
+      success: '',
+      error: '必须是11位手机号'
+    },
+    password: {
+      success: '',
+      error: '长度至少6位'
+    },
+    required: {
+      success: '',
+      error: '不能为空'
+    }
+  };
+  $validationProvider.setExpression(expression).setDefaultMsg(defaultMsg);
+}]);
 
 //主页控制器
 angular.module('app').controller('mainCtrl', ['$http', '$scope', function($http, $scope){
@@ -143,6 +180,13 @@ angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',
   }
 }]);
 
+angular.module('app').controller('meCtrl',['$scope',function($scope){
+	
+}]);
+
+angular.module('app').controller('loginCtrl',['$http','$scope',function($http,$scope){
+	
+}]);
 //指令
 angular.module('app').directive('appHead', [function(){
   return {
