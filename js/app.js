@@ -1,7 +1,7 @@
 "use strict";
 
 
-angular.module('app', ['ui.router','validation']);
+angular.module('app', ['ui.router','validation','ngCookies']);
 //控制器
 
 //定义全局变量
@@ -18,6 +18,28 @@ angular.module('app').value('dict', {}).run(['dict', '$http', function(dict, $ht
   });
 }]);
 
+//配置http
+angular.module('app').config(['$provide', function($provide){
+  $provide.decorator('$http', ['$delegate', '$q', function($delegate, $q){
+    $delegate.post = function(url, data, config) {
+      var def = $q.defer();
+      $delegate.get(url).success(function(resp) {
+        def.resolve(resp);
+      }).error(function(err) {
+        def.reject(err);
+      });
+      return {
+        success: function(cb){
+          def.promise.then(cb);
+        },
+        error: function(cb) {
+          def.promise.then(null, cb);
+        }
+      }
+    }
+    return $delegate;
+  }]);
+}]);
 //路由
 angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
   $stateProvider.state('main', {
@@ -44,6 +66,10 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($
   	url:'/login',
   	templateUrl:'view/login.html',
   	controller:'loginCtrl'
+  }).state('register',{
+  	url:'/register',
+  	templateUrl:'view/register.html',
+ 		controller:'registerCtrl'
   });
   $urlRouterProvider.otherwise('main');
 }]);
@@ -119,7 +145,7 @@ angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',
 
 angular.module('app').controller('companyCtrl', ['$http', '$state', '$scope', function($http, $state, $scope){
   $http.get('data/company.json?id='+$state.params.id).success(function(resp){
-  	console.log(resp)
+  	//console.log(resp)
     $scope.company = resp;
   });
 }]);
@@ -180,11 +206,31 @@ angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',
   }
 }]);
 
-angular.module('app').controller('meCtrl',['$scope',function($scope){
-	
+angular.module('app').controller('meCtrl',['$scope','cache','$state',function($scope,cache,$state){
+	if(cache.get('name')){
+		$scope.name = cache.get('name');
+		$scope.image = cache.get('image')
+	}
+	$scope.logout = function(){
+		cache.remove('id');
+		cache.remove('name');
+		cache.remove('image');
+		$state.go('main');
+	}
 }]);
 
-angular.module('app').controller('loginCtrl',['$http','$scope',function($http,$scope){
+angular.module('app').controller('loginCtrl',['$state','cache','$http','$scope',function($state,cache,$http,$scope){
+	$scope.submit = function() {
+    $http.post('data/login.json', $scope.user).success(function(resp){
+      cache.put('id',resp.id);
+      cache.put('name',resp.name);
+      cache.put('image',resp.image);
+      $state.go('main');
+    });
+  }
+}]);
+
+angular.module('app').controller('registerCtrl',['$state','$http','$scope',function(){
 	
 }]);
 //指令
@@ -366,3 +412,15 @@ angular.module('app').filter('filterByObj',[function(){
 	}
 }]);
 
+//服务
+angular.module('app').service('cache', ['$cookies', function($cookies){
+    this.put = function(key, value){
+      $cookies.put(key, value);
+    };
+    this.get = function(key) {
+      return $cookies.get(key);
+    };
+    this.remove = function(key) {
+      $cookies.remove(key);
+    };
+}]);
