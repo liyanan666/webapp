@@ -1,19 +1,19 @@
 "use strict";
 
 
-angular.module('app', ['ui.router','validation','ngCookies']);
+angular.module('app', ['ui.router','validation','ngCookies']);//引用插件
 //控制器
 
-//定义全局变量
+//定义全局变量   
 angular.module('app').value('dict', {}).run(['dict', '$http', function(dict, $http){
-  $http.get('data/city.json').success(function(resp){
+  $http.get('data/city.json').success(function(resp){//获取城市
     dict.city = resp;
    // console.log( dict.city)
   });
-  $http.get('data/salary.json').success(function(resp){
+  $http.get('data/salary.json').success(function(resp){//获取薪资范围
     dict.salary = resp;
   });
-  $http.get('data/scale.json').success(function(resp){
+  $http.get('data/scale.json').success(function(resp){//获取
     dict.scale = resp;
   });
 }]);
