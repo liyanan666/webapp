@@ -13,14 +13,14 @@ angular.module('app').value('dict', {}).run(['dict', '$http', function(dict, $ht
   $http.get('data/salary.json').success(function(resp){//获取薪资范围
     dict.salary = resp;
   });
-  $http.get('data/scale.json').success(function(resp){//获取
+  $http.get('data/scale.json').success(function(resp){//获取公司规模
     dict.scale = resp;
   });
 }]);
 
 //配置http
 angular.module('app').config(['$provide', function($provide){
-  $provide.decorator('$http', ['$delegate', '$q', function($delegate, $q){
+  $provide.decorator('$http', ['$delegate', '$q', function($delegate, $q){//配置$http请求
     $delegate.post = function(url, data, config) {
       var def = $q.defer();
       $delegate.get(url).success(function(resp) {
@@ -41,9 +41,9 @@ angular.module('app').config(['$provide', function($provide){
   }]);
 }]);
 //路由
-angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
+angular.module('app').config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {//设置路由
   $stateProvider.state('main', {
-    url: '/main',
+    url: '/main',//主页面
     templateUrl: 'view/main.html',
     controller : 'mainCtrl'
   }).state('position', {
@@ -122,12 +122,12 @@ angular.module('app').controller('mainCtrl', ['$http', '$scope', function($http,
 angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',function($http,$q,$state,$scope){
 	$scope.message = $scope.isLogin?'请登录':'投个简历吧'
 	 function getPosition(){
-	 	var def = $q.defer();
+	 	var def = $q.defer();   //$q为promise对象
 	 	$http.get('data/position.json', {
       params: {
-        id: $state.params.id
+        id: $state.params.id  //在这取路由的id
       }
-    }).success(function(resp) {
+    }).success(function(resp) {//根据路由id获取相应的内容 填充页面
       $scope.position = resp;
       if(resp.posted) {
         $scope.message = '已投递';
@@ -146,7 +146,7 @@ angular.module('app').controller('positionCtrl',['$http','$q','$state','$scope',
 	 getPosition().then(function(){
 	 		getCompany();
 	 });
-  $scope.go = function(){//未完待续
+  $scope.go = function(){//
   	 if($scope.message !== '已投递') {
       if($scope.isLogin) {
         $http.post('data/handle.json', {
@@ -169,7 +169,8 @@ angular.module('app').controller('companyCtrl', ['$http', '$state', '$scope', fu
   });
 }]);
 
-angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',function(dict,$http, $state, $scope){
+//搜索
+angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',function(dict,$http, $state, $scope){ 
 	$scope.name = '';
 	$scope.search = function() {
     $http.get('data/positionList.json?name='+$scope.name).success(function(resp) {
@@ -225,7 +226,7 @@ angular.module('app').controller('searchCtrl',['dict','$http','$state','$scope',
   }
 }]);
 
-angular.module('app').controller('meCtrl',['$scope','cache','$state',function($scope,cache,$state){
+angular.module('app').controller('meCtrl',['$scope','cache','$state',function($scope,cache,$state){  //获取和设置cookie
 	if(cache.get('name')){
 		$scope.name = cache.get('name');
 		$scope.image = cache.get('image')
@@ -324,19 +325,18 @@ angular.module('app').directive('appHead', [function(){
   };
 }]);
 
-angular.module('app').directive('appPositionList', ['$http',function($http){
+angular.module('app').directive('appPositionList', ['$http',function($http){  //求职列表
   return {
     restrict: 'A',
     replace: true,
     scope: {
       data : '=',
       filterObj : '=',
-      isFavorite : '='
     },
     templateUrl: 'view/template/apppositionlist.html',
     link:function($scope){
-    	$scope.select=function(item){
-    		$http.post('data/favorite.json',{
+    	$scope.select=function(item){ //点击添加或取消收藏
+    		$http.post('data/favorite.json',{//发送数据  
     			id:item.id,
     			select:!item.select,
     		}).success(function(resp){
@@ -362,25 +362,25 @@ angular.module('app').directive('appHeadBar', [function(){
   return {
     restrict: 'A',
     replace: true,
-    templateUrl: 'view/template/headBar.html',
+    templateUrl: 'view/template/headBar.html',  //绑定的模板地址
     scope: {
-      text: '@'
+      text: '@'   
     },
     link: function($scope) {
       $scope.back = function() {
-        window.history.back();
+        window.history.back();//点击返回上一页
       };
     }
   };
 }]);
 
-angular.module('app').directive('appPositionInfo',['$http',function($http){
+angular.module('app').directive('appPositionInfo',['$http',function($http){  //页面中间部分
 	return {
 		restrict : 'A',
 		replace :true,
 		templateUrl: 'view/template/positionInfo.html',
 		scope:{
-			isLogin:'=',
+			isLogin:'=', 
 			pos:'=',
 			isActive:'='
 		},
@@ -391,7 +391,7 @@ angular.module('app').directive('appPositionInfo',['$http',function($http){
 						 $scope.imagePath = $scope.pos.select?'image/star-active.png':'image/star.png';
 					}
 			});
-			$scope.favorite = function(){
+			$scope.favorite = function(){ //收藏
 				$http.post('data/favorite.json',{
 					id:$scope.pos.id,
 					select: !$scope.pos.select
